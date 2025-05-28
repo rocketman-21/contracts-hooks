@@ -16,6 +16,8 @@ abstract contract JuiceboxPay is SlicerPurchasable {
     
     event JuiceboxPayContractCreated(address contractAddress, address productsModuleAddress, uint256 slicerId, uint256 projectId);
 
+    event JuiceboxSlicerPayment(address contractAddress, address productsModuleAddress, uint256 slicerId, uint256 projectId, address beneficiary, uint256 paidAmount, uint256 beneficiaryTokenCount);
+
     // =============================================================
     //                           Storage
     // =============================================================
@@ -67,7 +69,7 @@ abstract contract JuiceboxPay is SlicerPurchasable {
         IJBTerminal terminal = _getPrimaryTerminal(projectId, ETH);
 
         // Pay the terminal with the ETH sent with the transaction
-        terminal.pay{value: msg.value}(
+        uint256 beneficiaryTokenCount = terminal.pay{value: msg.value}(
             projectId,
             ETH, // ETH token address
             msg.value, // Amount of ETH being paid
@@ -76,6 +78,9 @@ abstract contract JuiceboxPay is SlicerPurchasable {
             "Order via slice.so", // Memo for the payment
             "" // No additional metadata
         );
+
+        // Emit event
+        emit JuiceboxSlicerPayment(address(this), _productsModuleAddress, slicerId, projectId, account, msg.value, beneficiaryTokenCount);
     }
 
     /**
