@@ -2,16 +2,33 @@
 pragma solidity ^0.8.0;
 
 import "../../extensions/Purchasable/SlicerPurchasable.sol";
+import { IJBDirectory } from "@nana-core/interfaces/IJBDirectory.sol";
+import { IJBTerminal } from "@nana-core/interfaces/IJBTerminal.sol";
 
 /**
- * Use this folder to quickly set up your custom purchase hook and factory contracts
+ * Juicebox v4 `pay` purchase hook.
  */
-abstract contract MyHook is SlicerPurchasable {
-    /// ============= Storage =============
+abstract contract JuiceboxPay is SlicerPurchasable {
 
-    // Add storage variables to initialize
+    // ===========================================================
+    //                           Events
+    //  ============================================================
+    
+    event JuiceboxPayContractCreated(address contractAddress, address productsModuleAddress, uint256 slicerId, uint256 projectId);
 
-    /// ============ Functions ============
+    // =============================================================
+    //                           Storage
+    // =============================================================
+
+    address public constant ETH = 0x000000000000000000000000000000000000EEEe;
+
+    IJBDirectory public constant directory = IJBDirectory(0x0bC9F153DEe4d3D474ce0903775b9b2AAae9AA41);
+
+    uint256 public projectId;
+
+    // =============================================================
+    //                          Functions
+    // =============================================================
 
     /**
      * @notice Describe purchase requirements
@@ -29,7 +46,7 @@ abstract contract MyHook is SlicerPurchasable {
     }
 
     /**
-     * @notice Describe added logic on purchase
+     * @notice Pay the JBTerminal for the project with ETH
      *
      * @dev Overridable function to handle external calls on product purchases from slicers. See {ISlicerPurchasable}
      */
@@ -46,6 +63,29 @@ abstract contract MyHook is SlicerPurchasable {
             revert NotAllowed();
         }
 
-        // Add product purchase logic here
+        // Get the primary terminal for the project, assume payment in ETH.
+        IJBTerminal terminal = _getPrimaryTerminal(projectId, ETH);
+
+        // Pay the terminal with the ETH sent with the transaction
+        terminal.pay{value: msg.value}(
+            projectId,
+            ETH, // ETH token address
+            msg.value, // Amount of ETH being paid
+            account, // Beneficiary receives the project tokens
+            0, // No minimum returned tokens required
+            "Order via slice.so", // Memo for the payment
+            "" // No additional metadata
+        );
+    }
+
+    /**
+     * @notice Get the primary terminal for a project and token
+     *
+     * @param _projectId The ID of the project
+     * @param token The address of the token
+     * @return terminal The primary terminal for the project and token
+     */
+    function _getPrimaryTerminal(uint256 _projectId, address token) internal view returns (IJBTerminal terminal) {
+        terminal = directory.primaryTerminalOf(_projectId, token);
     }
 }
