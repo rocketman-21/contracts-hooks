@@ -29,6 +29,12 @@ abstract contract JuiceboxPay is SlicerPurchasable {
     uint256 public projectId;
 
     // =============================================================
+    //                           Errors
+    // =============================================================
+    
+    error TerminalNotFound();
+
+    // =============================================================
     //                          Functions
     // =============================================================
 
@@ -67,6 +73,10 @@ abstract contract JuiceboxPay is SlicerPurchasable {
 
         // Get the primary terminal for the project, assume payment in ETH.
         IJBTerminal terminal = _getPrimaryTerminal(projectId, ETH);
+
+        if (address(terminal) == address(0)) {
+            revert TerminalNotFound();
+        }
 
         // Pay the terminal with the ETH sent with the transaction
         uint256 beneficiaryTokenCount = terminal.pay{value: msg.value}(

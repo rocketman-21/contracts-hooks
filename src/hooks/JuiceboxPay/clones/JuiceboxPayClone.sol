@@ -9,6 +9,15 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
  */
 contract JuiceboxPayClone is JuiceboxPay, Initializable {
     // =============================================================
+    //                         Constructor
+    // =============================================================
+
+    /// @notice Disable initializers on the implementation contract to prevent it from being initialized directly.
+    constructor() {
+        _disableInitializers();
+    }
+
+    // =============================================================
     //                         Initializer
     // =============================================================
 
